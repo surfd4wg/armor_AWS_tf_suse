@@ -1,42 +1,19 @@
 #!/bin/bash
-#--- apache ---
-sudo yum -y update
-sudo dnf -y install python3-pip
-sudo pip3 install awscli --upgrade --user
-sudo yum -y install httpd
-#sudo dnf install httpd
-#sudo firewall-cmd --permanent --add-service=https
-#sudo firewall-cmd --reload
-sudo systemctl start httpd
-sudo systemctl status httpd
-#echo "<h1>Deployed via Terraform</h1>" | sudo tee /var/www/html/index.html
-#--- NGINX ---
-#sudo dnf update
-#sudo dnf -y install nginx
-#sudo systemctl start nginx
-#sudo systemctl enable nginx
-#--- curl and jq ---
-sudo dnf -y install curl unzip
-sudo dnf -y install wget
-sudo dnf -y install jq
-sudo dnf -y install nano
-#--- Chrome ---
-#sudo wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-#sudo apt-get -y install ./google-chrome-stable_current_amd64.deb
-#--- Remote Desktop ---
-#sudo apt-get -y install xrdp
-#sudo systemctl enable --now xrdp
-#sudo ufw allow from any to any port 3389 proto tcp
-#--- Add a new user for Remote Desktop ---
-#Make sure you run "passwd" to set a new password to this account
-#The username and password will be located in $HOME/rdpcreds.txt
-#sudo yum -y update
-#sudo yum -y install snapd
-#sudo systemctl enable --now snapd.socket
-#sudo ln -s /var/lib/snapd/snap /snap
+sudo zypper refresh
+sudo zypper install --no-confirm  apache2
+sudo systemctl start apache2
+sudo systemctl enable apache2
+sudo systemctl status apache2
+echo "<h1>Deployed via Terraform</h1>" | sudo tee /srv/www/htdocs/index.html
+
+sudo zypper -n in curl
+sudo zypper -n in wget
+sudo zypper -n in jq
+sudo wget https://download.opensuse.org/repositories/editors/openSUSE_Leap_15.2/x86_64/nano-5.6.1-lp152.159.1.x86_64.rpm
+sudo rpm -ivh nano-5.6.1-lp152.159.1.x86_64.rpm
+
 sudo wget https://download-ib01.fedoraproject.org/pub/epel/8/Everything/x86_64/Packages/p/pwgen-2.08-3.el8.x86_64.rpm
 sudo rpm -Uvh pwgen*rpm
-sudo dnf -y install pwgen
 
 USERNAME=teddy
 sudo adduser $USERNAME
@@ -53,7 +30,7 @@ sudo echo "WHO I AM:"$WHOIAM
 #--- Armor Agent ---
 #mkdir -p /home/ubuntu/armor
 #cd /home/ununtu/armor
-#sudo curl -sSL https://agent.armor.com/latest/armor_agent.sh | sudo bash /dev/stdin -l BCDHC-FKWCQ-6J6JP-PBPF4-DWCPM -r us-west-armor -f
+sudo curl -sSL https://agent.armor.com/latest/armor_agent.sh | sudo bash /dev/stdin -l BCDHC-FKWCQ-6J6JP-PBPF4-DWCPM -r us-west-armor -f
 
 #--- Metadata and index.html files ---
 PRETTYpretty=$(cat /etc/os-release | awk -F '=' '/^PRETTY_NAME/{print $2}' | tr -d '"')
@@ -101,12 +78,14 @@ case "$PRETTYpretty" in
     wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/bashrc.txt -O /root/.bashrc 2>/dev/null
     sudo cat /var/www/html/ascii-art-RHEL.ans
     ;;
-  *suse*)
-    wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/ansiart/scii-art-suse1.ans 2>/dev/null
-    wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/ansiart/ascii-art-suse1.html -O /var/www/html/index.html 2>/dev/null
-    wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/bashrc.txt -O /home/ec2-user/.bashrc 2>/dev/null
+  *SUSE*)
+    wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/ansiart/ascii-art-suse2.ans -O /srv/www/htdocs/ascii-art-suse2.ans 2>/dev/null
+    wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/ansiart/ascii-art-suse2.html -O /srv/www/htdocs/index.html 2>/dev/null
+    wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/bashrc.txt -O /bashrc_append.txt 2>/dev/null
+    cat /bashrc_append.txt >> /home/ec2-user/.bashrc
     wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/bashrc.txt -O /root/.bashrc 2>/dev/null
-    cat ascii-art-suse1.ans ;;
+    sudo cat /srv/www/htdocs/ascii-art-suse2.ans
+    ;;
   *fedora*)
     wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/ansiart/ascii-art-fedora.ans 2>/dev/null
     wget -N https://armorscripts.s3.amazonaws.com/BASHscripts/ansiart/ascii-art-fedora.html -O /var/www/html/index.html 2>/dev/null
@@ -117,7 +96,7 @@ case "$PRETTYpretty" in
     printf '%s\n\n' "This is some other version of linux"
     ;;
 esac
-chmod +x /var/www/html/index.html
+chmod +x /srv/www/htdocs/index.html
 
 #GET ec2 localhost meta-data
 INSTANCE_ID=$(TOKEN=`curl -sS -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` 2>/dev/null && curl -sS -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
@@ -136,8 +115,8 @@ PUBLIC_IP=$(TOKEN=`curl -sS -X PUT "http://169.254.169.254/latest/api/token" -H 
 #VarPUB="$(echo "$NEWpublichostname" | cut -d ' ')"
 #VarPUB="$( cut -d ' ' -f 1,2 <<< "$NEWpublichostname" )"-"$INSTANCE_ID"; echo "$VarPUB"
 #VarPRI="$( cut -d ' ' -f 1,2 <<< "$NEWprivatehostname" )"-"$INSTANCE_ID"; echo "$VarPRI"
-VarPRI="craigums-$PRIVATE_IP-$AVAIL_ZONE-Suse"-"$INSTANCE_ID"
-VarPUB="craigums-$PUBLIC_IP-$AVAIL_ZONE-Suse"-"$INSTANCE_ID"
+VarPRI="craigums-$PRIVATE_IP-$AVAIL_ZONE-SUSE"-"$INSTANCE_ID"
+VarPUB="craigums-$PUBLIC_IP-$AVAIL_ZONE-SUSE"-"$INSTANCE_ID"
 echo "NEW Private hostname:"$NEWprivatehostname
 echo "NEW Public hostname:"$NEWpublichostname
 echo "VarPUB:"$VarPUB
@@ -180,16 +159,16 @@ configLine "$PRIVATE_IP $VarPRI" "$PRIVATE_IP $VarPRI $PRIVATE_DNS" /etc/hosts
 
 #ADD meta-data to default index.html file 
 printf '%s\n\n'
-printf "%20s%b\n" "PRETTY Linux Name : " "$PRETTYpretty" | tee /var/www/html/file.txt
-printf "%20s%b\n" "INSTANCE ID : " "$INSTANCE_ID"  | tee -a /var/www/html/file.txt
-printf "%20s%b\n" "HOSTNAME : " "$HOSTNAME" | tee -a /var/www/html/file.txt
-printf "%20s%b\n" "REGION : " "$REGION" | tee -a /var/www/html/file.txt
-printf "%20s%b\n" "AVAILABILITY ZONE : " "$AVAIL_ZONE" | tee -a /var/www/html/file.txt
-printf "%20s%b\n" "PRIVATE IP : " "$PRIVATE_IP" | tee -a /var/www/html/file.txt
-printf "%20s%b\n" "PUBLIC IP : " "$PUBLIC_IP" | tee -a /var/www/html/file.txt
+printf "%20s%b\n" "PRETTY Linux Name : " "$PRETTYpretty" | tee /srv/www/htdocs/file.txt
+printf "%20s%b\n" "INSTANCE ID : " "$INSTANCE_ID"  | tee -a /srv/www/htdocs/file.txt
+printf "%20s%b\n" "HOSTNAME : " "$HOSTNAME" | tee -a /srv/www/htdocs/file.txt
+printf "%20s%b\n" "REGION : " "$REGION" | tee -a /srv/www/htdocs/file.txt
+printf "%20s%b\n" "AVAILABILITY ZONE : " "$AVAIL_ZONE" | tee -a /srv/www/htdocs/file.txt
+printf "%20s%b\n" "PRIVATE IP : " "$PRIVATE_IP" | tee -a /srv/www/htdocs/file.txt
+printf "%20s%b\n" "PUBLIC IP : " "$PUBLIC_IP" | tee -a /srv/www/htdocs/file.txt
 
-printf "%20s%b\n" "PRIVATE DNS : " "$VarPRI" | tee -a /var/www/html/file.txt
-printf "%20s%b\n" "PUBLIC DNS : " "$VarPUB" | tee -a /var/www/html/file.txt
+printf "%20s%b\n" "PRIVATE DNS : " "$VarPRI" | tee -a /srv/www/htdocs/file.txt
+printf "%20s%b\n" "PUBLIC DNS : " "$VarPUB" | tee -a /srv/www/htdocs/file.txt
 printf '%s\n\n'
 
 set -o allexport
