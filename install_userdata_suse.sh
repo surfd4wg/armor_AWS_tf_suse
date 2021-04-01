@@ -162,7 +162,7 @@ configLine "$PRIVATE_IP $VarPRI" "$PRIVATE_IP $VarPRI $PRIVATE_DNS" /etc/hosts
 printf '%s\n\n'
 printf "%20s%b\n" "PRETTY Linux Name : " "$PRETTYpretty" | tee /srv/www/htdocs/file.txt
 printf "%20s%b\n" "INSTANCE ID : " "$INSTANCE_ID"  | tee -a /srv/www/htdocs/file.txt
-printf "%20s%b\n" "HOSTNAME : " "$HOSTNAME" | tee -a /srv/www/htdocs/file.txt
+printf "%20s%b\n" "HOSTNAME : " "$VarPUB" | tee -a /srv/www/htdocs/file.txt
 printf "%20s%b\n" "REGION : " "$REGION" | tee -a /srv/www/htdocs/file.txt
 printf "%20s%b\n" "AVAILABILITY ZONE : " "$AVAIL_ZONE" | tee -a /srv/www/htdocs/file.txt
 printf "%20s%b\n" "PRIVATE IP : " "$PRIVATE_IP" | tee -a /srv/www/htdocs/file.txt
