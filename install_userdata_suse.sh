@@ -1,4 +1,14 @@
 #!/bin/bash
+banner()
+{
+  echo "+------------------------------------------+"
+  printf "| %-40s |\n" "`date`"
+  echo "|                                          |"
+  printf "|`tput bold` %-40s `tput sgr0`|\n" "$@"
+  echo "+------------------------------------------+"
+}
+#Apache2
+banner "Installing Apache2"
 sudo zypper refresh
 sudo zypper install --no-confirm  apache2
 sudo systemctl start apache2
@@ -6,6 +16,8 @@ sudo systemctl enable apache2
 sudo systemctl status apache2
 echo "<h1>Deployed via Terraform</h1>" | sudo tee /srv/www/htdocs/index.html
 
+#curl, wget, jq, nano, pwgen
+banner "Installing curl, wget, jq, nano, pwgen"
 sudo zypper -n in curl
 sudo zypper -n in wget
 sudo zypper -n in jq
@@ -16,24 +28,23 @@ sudo wget https://download-ib01.fedoraproject.org/pub/epel/8/Everything/x86_64/P
 sudo rpm -Uvh pwgen*rpm
 
 USERNAME=teddy
-sudo adduser $USERNAME
-sudo usermod -aG wheel $USERNAME
-sudo dnf -y install pwgen
+sudo useradd $USERNAME
+sudo echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/90*
 sudo grep $USERNAME /etc/passwd >> /usercreds.txt
 PASSWORD=$(pwgen -ys 15 1)
+banner "Creating user:$USERNAME pass:$PASSWORD for rdp"
 sudo echo $USERNAME:$PASSWORD | sudo chpasswd
 sudo echo "Username:"$USERNAME, "Password:"$PASSWORD >> /rdpcreds.txt
 sudo echo "Home:"$HOME,"Username:"$USERNAME, "Password:"$PASSWORD
 WHOIAM=$(whoami)
 sudo echo "WHO I AM:"$WHOIAM
 
-
 #--- Armor Agent ---
-#mkdir -p /home/ubuntu/armor
-#cd /home/ununtu/armor
+banner "Installing the Armor Agent"
 sudo curl -sSL https://agent.armor.com/latest/armor_agent.sh | sudo bash /dev/stdin -l BCDHC-FKWCQ-6J6JP-PBPF4-DWCPM -r us-west-armor -f
 
 #--- Metadata and index.html files ---
+banner "Generating webserver metadata"
 PRETTYpretty=$(cat /etc/os-release | awk -F '=' '/^PRETTY_NAME/{print $2}' | tr -d '"')
 #GET distro type and CREATE default index.html file
 sudo echo "Linux Distribution :"$PRETTYpretty

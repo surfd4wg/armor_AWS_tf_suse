@@ -40,7 +40,7 @@ variable "secret_key" {
 
 variable "myname" {
   description = "Default Name tag for AWS Resources"
-  default     = "YourCoName"
+  default     = "Suse"
 }
 
 variable "mydept" {
@@ -68,3 +68,7 @@ variable "ami_id" {
   default     = 1234567890
 }
 
+variable "instance_count" {
+  description = "Number of instances to launch"
+  default = 2
+}
