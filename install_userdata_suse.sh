@@ -27,6 +27,7 @@ sudo echo "Home:"$HOME,"Username:"$USERNAME, "Password:"$PASSWORD
 WHOIAM=$(whoami)
 sudo echo "WHO I AM:"$WHOIAM
 
+
 #--- Armor Agent ---
 #mkdir -p /home/ubuntu/armor
 #cd /home/ununtu/armor
